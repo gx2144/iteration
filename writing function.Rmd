@@ -1,0 +1,410 @@
+---
+title: "writing function"
+author: "Guangling Xu"
+date: "2019/10/24"
+output: github_document
+---
+
+## set up
+
+```{r}
+library(tidyverse)
+library(rvest)
+
+set.seed(1)
+```
+
+
+## My first function
+```{r}
+x = rnorm(25, mean = 5, sd = 3)
+
+(x - mean(x)) / sd(x) ## z transformation
+```
+
+### This is a function
+```{r}
+z_score = function(x) {
+  
+  
+  if(!is.numeric(x)){
+    stop("x should be numeric")
+  }else if(length(x < 3)){
+    stop("x should be longer than 3")
+    
+  }
+  z = (x - mean(x)) / sd(x)
+  z
+  
+}
+
+```
+
+
+
+## multiple outputs
+
+```{r}
+mean_and_sd = function(input_x) {
+  
+  if (!is.numeric(input_x)) {
+    stop("Argument x should be numeric")
+  } else if (length(input_x) == 1) {
+    stop("Cannot be computed for length 1 vectors")
+  }
+  
+  mean_input = mean(input_x)
+  sd_input = sd(input_x)
+
+  list(mean = mean_input, 
+       sd = sd_input,
+       z_score = (input_x - mean(input_x))/ sd(input_x))
+}
+```
+
+
+```{r}
+mean_and_sd = function(x) {
+  
+  if (!is.numeric(x)) {
+    stop("Argument x should be numeric")
+  } else if (length(x) == 1) {
+    stop("Cannot be computed for length 1 vectors")
+  }
+  
+  mean_x = mean(x)
+  sd_x = sd(x)
+
+  tibble(
+    mean = mean_x, 
+    sd = sd_x
+  )
+}
+```
+
+
+## multiple inputs
+
+```{r}
+sim_regression = function(n , beta0 , beta1){
+## beta0, beta1 is the population parameter
+
+sim_data = tibble(
+  x = rnorm(n, mean = 1, sd = 1),## the sample data we chose from the population
+  y = beta0 + beta1 * x + rnorm(n, 0, 1)
+)
+
+ ls_fit = lm(y ~ x, data = sim_data)
+  
+ 
+ tibble(
+ beta0_hat = coef(ls_fit)[1],## intercept first coefficient
+ beta1_hat = coef(ls_fit)[2]## slope coefficient
+ )
+}
+
+sim_regression(n = 1000, beta0 = 17, beta1 = -3)
+               
+```
+
+
+
+```{r}
+url = "https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&reviewerType=avp_only_reviews&sortBy=recent&pageNumber=1"
+
+dynamite_html = read_html(url)
+
+review_titles = dynamite_html %>%
+  html_nodes("#cm_cr-review_list .review-title") %>%
+  html_text()
+
+review_stars = dynamite_html %>%
+  html_nodes("#cm_cr-review_list .review-rating") %>%
+  html_text()
+
+review_text = dynamite_html %>%
+    html_nodes(".review-data:nth-child(4)") %>%
+    html_text()
+
+reviews = tibble(
+  title = review_titles,
+  stars = review_stars,
+  text = review_text
+)
+```
+
+
+```{r}
+read_page_reviews <- function(url) {
+  
+  h = read_html(url)
+  
+  review_titles = h %>%
+    html_nodes("#cm_cr-review_list .review-title") %>%
+    html_text()
+  
+  review_stars = h %>%
+    html_nodes("#cm_cr-review_list .review-rating") %>%
+    html_text() %>%
+    str_extract("\\d") %>%
+    as.numeric()
+  
+  review_text = h %>%
+    html_nodes(".review-data:nth-child(4)") %>%
+    html_text()
+  
+  tibble(
+    title = review_titles,
+    stars = review_stars,
+    text = review_text
+  )
+}
+```
+
+```{r}
+chks <- subset(ChickWeight, as.integer(Chick) < 10)
+chks <- transform(chks, Chick = fct_shuffle(Chick))
+
+ggplot(chks, aes(Time, weight, colour = fct_reorder2(Chick, Time, weight))) +
+  geom_point() +
+  geom_line() +
+  labs(colour = "Chick")
+
+ggplot(chks, aes(Time, weight, colour = fct_reorder(Chick, weight))) +
+  geom_point() +
+  geom_line() +
+  labs(colour = "Chick")
+
+ggplot(chks, aes(Time, weight, colour = fct_reorder(Chick, Time))) +
+  geom_point() +
+  geom_line() +
+  labs(colour = "Chick")
+
+```
+
+## for loop and map
+
+## This is gonna be so great
+
+```{r}
+l = list(vec_numeric = 5:8,
+         mat         = matrix(1:8, 2, 4),
+         vec_logical = c(TRUE, FALSE),
+         summary     = summary(rnorm(1000)))
+l
+```
+
+```{r}
+l$vec_numeric
+l$summary
+l[[2]]
+mean(l$vec_numeric)
+```
+
+
+```{r}
+df = list(
+  a = rnorm(20, 3, 1),
+  b = rnorm(20, 0, 5),
+  c = rnorm(20, 10, .2),
+  d = rnorm(20, -3, 1)
+)
+df$a
+df[[2]]
+```
+
+
+
+```{r}
+mean_and_sd = function(x) {
+  
+  if (!is.numeric(x)) {
+    stop("Argument x should be numeric")
+  } else if (length(x) == 1) {
+    stop("Cannot be computed for length 1 vectors")
+  }
+  
+  mean_x = mean(x)
+  sd_x = sd(x)
+  tibble(
+    mean = mean_x, 
+    sd = sd_x
+  )
+}
+```
+
+
+
+```{r}
+mean_and_sd(df[[1]])
+mean_and_sd(df[[2]])
+mean_and_sd(df[[3]])
+mean_and_sd(df[[4]])
+```
+
+```{r}
+output = vector("list", length = 4)
+```
+
+Write our first for loop!
+
+```{r}
+for (i in 1:4) {
+  
+  output[[i]] = mean_and_sd(df[[i]])
+  
+}
+output
+output = map(df, mean_and_sd)
+output_median = map(df, median)
+output_summary = map(df, summary)
+output_median = map_dbl(df, median)
+output = map_dfr(df, mean_and_sd)
+output = map(df, ~mean_and_sd(.x))
+```
+
+
+## Napoleon!!
+
+
+```{r}
+read_page_reviews = function(url) {
+  
+  h = read_html(url)
+  
+  title = h %>%
+    html_nodes("#cm_cr-review_list .review-title") %>%
+    html_text()
+  
+  stars = h %>%
+    html_nodes("#cm_cr-review_list .review-rating") %>%
+    html_text() %>%
+    str_extract("\\d") %>%
+    as.numeric()
+  
+  text = h %>%
+    html_nodes(".review-data:nth-child(5)") %>%
+    html_text()
+  
+  data_frame(title, stars, text)
+}
+```
+
+
+```{r}
+url_base = "https://www.amazon.com/product-reviews/B00005JNBQ/ref=cm_cr_arp_d_viewopt_rvwer?ie=UTF8&reviewerType=avp_only_reviews&sortBy=recent&pageNumber="
+vec_urls = str_c(url_base, 1:5)
+vec_urls
+output = vector("list", length = 5)
+for (i in 1:5) {
+  
+  output[[i]] = read_page_reviews(vec_urls[[i]])
+  
+}
+output = map(vec_urls, read_page_reviews)
+```
+
+
+## list columns / weather df
+
+
+```{r weather_create, cache = TRUE}
+weather = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2016-01-01",
+    date_max = "2016-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+
+
+nest within station
+
+```{r}
+weather_nest =
+  weather %>% 
+  nest(data = date:tmin)
+```
+
+is the list column really a list??
+
+```{r}
+weather_nest %>% pull(name)
+weather_nest %>% pull(data) 
+weather_nest$data[[1]]
+weather_nest %>% 
+  unnest()
+```
+
+
+## Operations on list columns
+
+can I do useful things with a list column...?
+
+```{r}
+central_park_df = weather_nest$data[[1]]
+lm(tmax ~ tmin, data = central_park_df)
+lm(tmax ~ tmin, data = weather_nest$data[[1]])
+lm(tmax ~ tmin, data = weather_nest$data[[2]])
+lm(tmax ~ tmin, data = weather_nest$data[[3]])
+```
+
+try a loop ...
+
+```{r}
+output = vector("list", length = 3)
+for (i in 1:3) {
+  
+  output[[i]] = lm(tmax ~ tmin, weather_nest$data[[i]])
+  
+}
+```
+
+```{r}
+weather_lm = function(df) {
+  
+  lm(tmax ~ tmin, data = df)
+  
+}
+```
+
+```{r}
+for (i in 1:3) {
+  
+  output[[i]] = weather_lm(weather_nest$data[[i]])
+  
+}
+output = map(weather_nest$data, weather_lm)
+```
+
+```{r}
+weather_nest %>% 
+  mutate(lin_models = map(data, weather_lm)) %>% 
+  select(-data) %>% 
+  filter(name != "CentralPark_NY")
+```
+
+
+## Revisit napoleon ... again
+
+
+```{r}
+napoleon = 
+  tibble(
+    page = 1:5,
+    urls = str_c(url_base, page)
+  ) %>% 
+  mutate(
+    reviews = map(urls, read_page_reviews)
+  ) %>% 
+  unnest(reviews) %>% 
+  select(-urls)
+```
